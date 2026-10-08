@@ -19,3 +19,6 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+# allow the env template (it has no secrets)
+!.env.example
