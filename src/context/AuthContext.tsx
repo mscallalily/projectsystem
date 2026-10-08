@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { api, setToken, clearToken, getToken, ApiError } from '../lib/api';
 
 export type UserRole = 'admin' | 'parking_admin' | 'security' | 'student' | 'faculty' | 'employee' | 'guest' | null;
 
@@ -11,37 +12,66 @@ interface AuthUser {
   dept?: string;
 }
 
+export interface LoginResult {
+  success: boolean;
+  role: UserRole;
+  message?: string;
+}
+
 interface AuthContextType {
   user: AuthUser | null;
-  login: (email: string, password: string) => { success: boolean; role: UserRole };
+  login: (identifier: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const MOCK_ACCOUNTS: Record<string, AuthUser> = {
-  'admin@pass.edu': { id: '0', name: 'System Administrator', email: 'admin@pass.edu', role: 'admin' },
-  'parking@pass.edu': { id: '1', name: 'Parking Admin', email: 'parking@pass.edu', role: 'parking_admin' },
-  'security@pass.edu': { id: '2', name: 'Liza Gonzales', email: 'security@pass.edu', role: 'security' },
-  'student@pass.edu': { id: '3', name: 'Maria Santos', email: 'student@pass.edu', role: 'student', idNum: '2021-00123', dept: 'College of Engineering' },
-  'faculty@pass.edu': { id: '4', name: 'Juan dela Cruz', email: 'faculty@pass.edu', role: 'faculty', idNum: '2019-00456', dept: 'College of Science' },
-  'guest@pass.edu': { id: '5', name: 'John Smith', email: 'guest@pass.edu', role: 'guest' },
-};
+// TEMPORARY: guests are not in the users table. This mock keeps GuestDashboardPage
+// working until the visitor module is built. Remove it in the visitor phase.
+const MOCK_GUEST: AuthUser = { id: 'guest-demo', name: 'John Smith', email: 'guest@pass.edu', role: 'guest' };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  // If a token is saved, wait for /me before deciding whether the user is logged in.
+  const [loading, setLoading] = useState<boolean>(!!getToken());
 
-  const login = (email: string, _password: string) => {
-    const found = MOCK_ACCOUNTS[email.toLowerCase()];
-    if (found) {
-      setUser(found);
-      return { success: true, role: found.role };
+  useEffect(() => {
+    if (!getToken()) return;
+    api<{ user: AuthUser }>('/me')
+      .then(res => setUser(res.user))
+      .catch(() => clearToken())
+      .finally(() => setLoading(false));
+  }, []);
+
+  const login = async (identifier: string, password: string): Promise<LoginResult> => {
+    if (identifier.trim().toLowerCase() === MOCK_GUEST.email) {
+      setUser(MOCK_GUEST);
+      return { success: true, role: 'guest' };
     }
-    return { success: false, role: null };
+    try {
+      const res = await api<{ token: string; user: AuthUser }>('/login', {
+        method: 'POST',
+        body: { identifier: identifier.trim(), password },
+      });
+      setToken(res.token);
+      setUser(res.user);
+      return { success: true, role: res.user.role };
+    } catch (e) {
+      const message = e instanceof ApiError ? e.message : 'Something went wrong. Please try again.';
+      return { success: false, role: null, message };
+    }
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    if (getToken()) api('/logout', { method: 'POST' }).catch(() => {});
+    clearToken();
+    setUser(null);
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>

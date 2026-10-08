@@ -25,8 +25,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 900));
-    const result = login(email, password);
+    
+    const result = await login(email, password);
     setLoading(false);
     if (result.success) {
       if (result.role === 'guest') {
@@ -35,7 +35,7 @@ export default function LoginPage() {
         navigate('/app/dashboard');
       }
     } else {
-      setError('Invalid email or password. Use a demo account below.');
+      setError(result.message ?? 'Invalid email or password.');
     }
   };
 
