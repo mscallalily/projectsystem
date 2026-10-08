@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Check, ChevronRight, ChevronLeft, Eye, EyeOff, AlertCircle, Car, User, Briefcase } from 'lucide-react';
+import { api, ApiError } from '../lib/api';
 
 const STEPS = ['Account Info', 'User Details', 'Vehicle Info', 'Confirmation'];
 
@@ -8,6 +9,8 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [form, setForm] = useState({
     fullName: '', idNum: '', email: '', password: '', confirmPwd: '',
@@ -22,10 +25,10 @@ export default function RegisterPage() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (step === 0) {
-      if (!form.fullName) e.fullName = 'Full name is required';
+      if (!form.fullName.trim().includes(' ')) e.fullName = 'Enter your first and last name';
       if (!form.idNum) e.idNum = 'ID number is required';
       if (!form.email || !form.email.includes('@')) e.email = 'Valid email required';
-      if (!form.password || form.password.length < 6) e.password = 'Password must be at least 6 characters';
+      if (!form.password || form.password.length < 8) e.password = 'Password must be at least 8 characters';
       if (form.password !== form.confirmPwd) e.confirmPwd = 'Passwords do not match';
     }
     if (step === 1) {
@@ -41,7 +44,41 @@ export default function RegisterPage() {
 
   const next = () => { if (validate()) setStep(s => Math.min(s + 1, 3)); };
   const prev = () => setStep(s => Math.max(s - 1, 0));
-  const submit = () => { if (form.agree) setSubmitted(true); };
+  const submit = async () => {
+    if (!form.agree || submitting) return;
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      await api('/register', {
+        method: 'POST',
+        body: {
+          full_name: form.fullName.trim(),
+          user_code: form.idNum.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          password_confirmation: form.confirmPwd,
+          user_type: form.userType,
+          department: form.dept,
+          contact_number: form.contact.trim(),
+          vehicle_type: form.vehicleType,
+          plate_number: form.plate.trim(),
+          make: form.make.trim(),
+          model: form.model.trim(),
+          color: form.color.trim(),
+        },
+      });
+      setSubmitted(true);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const details = Object.values(err.errors).flat().join(' ');
+        setSubmitError(details || err.message);
+      } else {
+        setSubmitError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -112,7 +149,7 @@ export default function RegisterPage() {
               <div>
                 <label className="text-sm font-medium text-slate-700 block mb-1.5">Password</label>
                 <div className="relative">
-                  <input type={showPwd ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} placeholder="Minimum 6 characters"
+                  <input type={showPwd ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} placeholder="Minimum 8 characters"
                     className={`w-full border ${errors.password ? 'border-red-400' : 'border-slate-200'} rounded-xl px-4 py-3 text-sm pr-12 focus:outline-none focus:ring-2 focus:ring-[#2563EB]`} />
                   <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">{showPwd ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                 </div>
@@ -216,6 +253,11 @@ export default function RegisterPage() {
                 <input type="checkbox" checked={form.agree} onChange={e => set('agree', e.target.checked)} className="mt-1 rounded" />
                 <span>I agree to the PASS <span className="text-[#2563EB]">Terms and Conditions</span> and <span className="text-[#2563EB]">Privacy Notice</span>. I certify that all information provided is accurate.</span>
               </label>
+              {submitError && (
+                <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 p-3 rounded-xl">
+                  <AlertCircle size={14} className="shrink-0 mt-0.5" /> {submitError}
+                </div>
+              )}
               {!form.agree && (
                 <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-3 rounded-xl">
                   <AlertCircle size={14} /> Please agree to the terms to submit your registration.
@@ -237,7 +279,7 @@ export default function RegisterPage() {
                 Continue <ChevronRight size={16} />
               </button>
             ) : (
-              <button onClick={submit} disabled={!form.agree} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 text-sm">
+              <button onClick={submit} disabled={!form.agree || submitting} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 text-sm">
                 <Check size={16} /> Submit Registration
               </button>
             )}
