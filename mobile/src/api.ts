@@ -149,3 +149,26 @@ export async function getParkingZones(): Promise<ZoneRow[]> {
   const data = await request<{ zones: ZoneRow[] }>('/parking/zones');
   return data.zones;
 }
+
+
+export type NotificationRow = {
+  id: number;
+  type: string;
+  title: string;
+  body: string;
+  read: boolean;
+  sent_at: string;
+};
+
+export async function getNotifications(): Promise<NotificationRow[]> {
+  const data = await request<{ notifications: NotificationRow[] }>('/notifications');
+  return data.notifications;
+}
+
+export async function markNotificationRead(id: number): Promise<void> {
+  await request(`/notifications/${id}/read`, { method: 'POST' });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await request('/notifications/read-all', { method: 'POST' });
+}

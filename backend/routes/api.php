@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\NotificationController; // mobile: added
 use App\Http\Controllers\Api\ParkingController; // mobile: added
 use Illuminate\Support\Facades\Route;
 
@@ -12,4 +13,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/parking/zones', [ParkingController::class, 'zones']); // mobile: added
+
+    Route::get('/notifications', [NotificationController::class, 'index']); // mobile: added
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']); // mobile: added
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->whereNumber('id'); // mobile: added
 });

@@ -15,8 +15,6 @@ import QRPassScreen from './src/screens/QRPassScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import BottomNav from './src/components/BottomNav';
 import { MobileUser } from './src/data/accounts';
-import { MOCK_NOTIFS } from './src/data/mock';
-import type { Notif } from './src/data/mock';
 import { Tab } from './src/types';
 import { logout } from './src/api';
 
@@ -26,7 +24,6 @@ export default function App() {
   const [authScreen, setAuthScreen] = useState<AuthScreen>('welcome');
   const [user, setUser] = useState<MobileUser | null>(null);
   const [tab, setTab] = useState<Tab>('home');
-  const [notifs, setNotifs] = useState<Notif[]>(MOCK_NOTIFS);
 
   const signIn = (u: MobileUser) => {
     setUser(u);
@@ -41,12 +38,6 @@ export default function App() {
 
   const guest = () =>
     signIn({ name: 'Guest User', role: 'guest', email: 'guest@pass.edu' });
-
-  const markRead = (id: number) =>
-    setNotifs((list) => list.map((n) => (n.id === id ? { ...n, read: true } : n)));
-
-  const markAllRead = () =>
-    setNotifs((list) => list.map((n) => ({ ...n, read: true })));
 
   const lightStatusBar = user
     ? tab === 'home' || tab === 'profile'
@@ -68,13 +59,7 @@ export default function App() {
       case 'history':
         return <HistoryScreen />;
       case 'notifications':
-        return (
-          <NotificationScreen
-            notifs={notifs}
-            onMarkRead={markRead}
-            onMarkAllRead={markAllRead}
-          />
-        );
+        return <NotificationScreen />;
       case 'qr':
         return <QRPassScreen user={u} />;
       case 'profile':
