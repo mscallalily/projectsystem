@@ -18,6 +18,7 @@ import { MobileUser } from './src/data/accounts';
 import { MOCK_NOTIFS } from './src/data/mock';
 import type { Notif } from './src/data/mock';
 import { Tab } from './src/types';
+import { logout } from './src/api';
 
 type AuthScreen = 'welcome' | 'login' | 'register';
 
@@ -33,6 +34,7 @@ export default function App() {
   };
 
   const signOut = () => {
+    logout();
     setUser(null);
     setAuthScreen('welcome');
   };
@@ -46,7 +48,6 @@ export default function App() {
   const markAllRead = () =>
     setNotifs((list) => list.map((n) => ({ ...n, read: true })));
 
-  // Light (white) status bar icons on screens with a dark-blue header
   const lightStatusBar = user
     ? tab === 'home' || tab === 'profile'
     : authScreen === 'welcome';

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MOBILE_ACCOUNTS, MobileUser } from '../data/accounts';
+import { login } from '../api';
 
 type Props = {
   onBack: () => void;
@@ -34,13 +35,21 @@ export default function LoginScreen({ onBack, onSuccess }: Props) {
   const submit = async () => {
     setError('');
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    const found = MOBILE_ACCOUNTS[email.trim().toLowerCase()];
-    if (found) {
-      onSuccess(found);
-    } else {
-      setError('Invalid credentials. Try a demo account below.');
+    try {
+      // Offline demo accounts (temporary, for testing screens without the API)
+      const demo = MOBILE_ACCOUNTS[email.trim().toLowerCase()];
+      if (demo) {
+        await new Promise((r) => setTimeout(r, 500));
+        onSuccess(demo);
+        return;
+      }
+      // Real sign in against the Laravel API
+      const user = await login(email.trim(), pwd);
+      onSuccess(user);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sign in failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,13 +84,14 @@ export default function LoginScreen({ onBack, onSuccess }: Props) {
           </View>
         )}
 
-        <Text style={styles.label}>Email or ID</Text>
+        <Text style={styles.label}>Email or ID Number</Text>
         <TextInput
           value={email}
           onChangeText={setEmail}
           placeholder="email@university.edu"
           placeholderTextColor="#94A3B8"
           autoCapitalize="none"
+          autoCorrect={false}
           keyboardType="email-address"
           style={styles.input}
         />
@@ -117,7 +127,7 @@ export default function LoginScreen({ onBack, onSuccess }: Props) {
         </Pressable>
 
         <View style={styles.demoBox}>
-          <Text style={styles.demoTitle}>Demo accounts</Text>
+          <Text style={styles.demoTitle}>Demo accounts (offline, no password)</Text>
           <View style={styles.demoRow}>
             {DEMOS.map((d) => (
               <Pressable
