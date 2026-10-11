@@ -5,9 +5,11 @@ let authToken: string | null = null;
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  errors?: Record<string, string[]>;
+  constructor(message: string, status: number, errors?: Record<string, string[]>) {
     super(message);
     this.status = status;
+    this.errors = errors;
   }
 }
 
@@ -32,18 +34,32 @@ async function request<T>(
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new ApiError(data.message ?? 'Something went wrong.', res.status);
+      throw new ApiError(
+        data.message ?? 'Something went wrong.',
+        res.status,
+        data.errors
+      );
     }
     return data as T;
   } catch (e) {
     if (e instanceof ApiError) throw e;
     throw new ApiError(
-      'Cannot reach the server. Check your Wi-Fi and that the API is running.',
+      __DEV__
+        ? `Cannot reach the server (${String(e)}). URL: ${API_URL}${path}`
+        : 'Cannot reach the server. Check your Wi-Fi and try again.',
       0
     );
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Turns an error into a list of readable messages. */
+export function errorMessages(e: unknown): string[] {
+  if (e instanceof ApiError && e.errors) {
+    return Object.values(e.errors).map((list) => list[0]);
+  }
+  return [e instanceof Error ? e.message : 'Something went wrong.'];
 }
 
 type ApiUser = {
@@ -90,4 +106,28 @@ export async function logout(): Promise<void> {
     // Even if the server can't be reached, sign the user out locally.
   }
   authToken = null;
+}
+
+export type RegisterPayload = {
+  full_name: string;
+  user_code: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  user_type: string;
+  department: string;
+  contact_number: string;
+  vehicle_type: string;
+  plate_number: string;
+  make?: string;
+  model?: string;
+  color?: string;
+};
+
+export async function register(payload: RegisterPayload): Promise<string> {
+  const data = await request<{ message: string }>('/register', {
+    method: 'POST',
+    body: payload,
+  });
+  return data.message;
 }
