@@ -9,7 +9,7 @@ import ParkingScreen from './src/screens/ParkingScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
 import QRPassScreen from './src/screens/QRPassScreen';
-import PlaceholderScreen from './src/screens/PlaceholderScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import BottomNav from './src/components/BottomNav';
 import { MobileUser } from './src/data/accounts';
 import { MOCK_NOTIFS } from './src/data/mock';
@@ -43,9 +43,11 @@ export default function App() {
   const markAllRead = () =>
     setNotifs((list) => list.map((n) => ({ ...n, read: true })));
 
-  const lightStatusBar = user ? tab === 'home' : authScreen === 'welcome';
+  // Light (white) status bar icons on screens with a dark-blue header
+  const lightStatusBar = user
+    ? tab === 'home' || tab === 'profile'
+    : authScreen === 'welcome';
 
-  // Each module screen gets one case here as we build it
   const renderTab = (u: MobileUser) => {
     switch (tab) {
       case 'home':
@@ -64,8 +66,8 @@ export default function App() {
         );
       case 'qr':
         return <QRPassScreen user={u} />;
-      default:
-        return <PlaceholderScreen tab={tab} onSignOut={signOut} />;
+      case 'profile':
+        return <ProfileScreen user={u} onNavigate={setTab} onSignOut={signOut} />;
     }
   };
 
