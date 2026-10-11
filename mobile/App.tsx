@@ -1,66 +1,68 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, Pressable } from 'react-native';
+import { View } from 'react-native';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import PlaceholderScreen from './src/screens/PlaceholderScreen';
+import BottomNav from './src/components/BottomNav';
 import { MobileUser } from './src/data/accounts';
+import { Tab } from './src/types';
 
-type Screen = 'welcome' | 'login' | 'register' | 'guest' | 'home';
+type AuthScreen = 'welcome' | 'login' | 'register';
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('welcome');
+  const [authScreen, setAuthScreen] = useState<AuthScreen>('welcome');
   const [user, setUser] = useState<MobileUser | null>(null);
+  const [tab, setTab] = useState<Tab>('home');
+
+  const signIn = (u: MobileUser) => {
+    setUser(u);
+    setTab('home');
+  };
 
   const signOut = () => {
     setUser(null);
-    setScreen('welcome');
+    setAuthScreen('welcome');
   };
+
+  const guest = () =>
+    signIn({ name: 'Guest User', role: 'guest', email: 'guest@pass.edu' });
+
+  const lightStatusBar = user ? tab === 'home' : authScreen === 'welcome';
 
   return (
     <View style={{ flex: 1 }}>
-      <StatusBar style={screen === 'welcome' ? 'light' : 'dark'} />
+      <StatusBar style={lightStatusBar ? 'light' : 'dark'} />
 
-      {screen === 'welcome' && (
+      {!user && authScreen === 'welcome' && (
         <WelcomeScreen
-          onLogin={() => setScreen('login')}
-          onRegister={() => setScreen('register')}
-          onGuest={() => setScreen('guest')}
+          onLogin={() => setAuthScreen('login')}
+          onRegister={() => setAuthScreen('register')}
+          onGuest={guest}
+        />
+      )}
+      {!user && authScreen === 'login' && (
+        <LoginScreen onBack={() => setAuthScreen('welcome')} onSuccess={signIn} />
+      )}
+      {!user && authScreen === 'register' && (
+        <RegisterScreen
+          onBack={() => setAuthScreen('welcome')}
+          onDone={() => setAuthScreen('login')}
         />
       )}
 
-      {screen === 'login' && (
-        <LoginScreen
-          onBack={() => setScreen('welcome')}
-          onSuccess={(u) => {
-            setUser(u);
-            setScreen('home');
-          }}
-        />
-      )}
-
-      {screen === 'home' && user && (
-        <View
-          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}
-        >
-          <Text style={{ fontSize: 22, fontWeight: '700', color: '#123B6D' }}>
-            Welcome, {user.name}
-          </Text>
-          <Text style={{ color: '#64748B' }}>Role: {user.role}</Text>
-          <Text style={{ color: '#64748B' }}>Home screen coming soon</Text>
-          <Pressable onPress={signOut}>
-            <Text style={{ color: '#2563EB', fontSize: 16 }}>Sign out</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {(screen === 'register' || screen === 'guest') && (
-        <View
-          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}
-        >
-          <Text style={{ fontSize: 20 }}>"{screen}" screen coming soon</Text>
-          <Pressable onPress={() => setScreen('welcome')}>
-            <Text style={{ color: '#2563EB', fontSize: 16 }}>Back</Text>
-          </Pressable>
+      {user && (
+        <View style={{ flex: 1 }}>
+          <View style={{ flex: 1 }}>
+            {tab === 'home' ? (
+              <HomeScreen user={user} onNavigate={setTab} />
+            ) : (
+              <PlaceholderScreen tab={tab} onSignOut={signOut} />
+            )}
+          </View>
+          <BottomNav role={user.role} active={tab} onChange={setTab} />
         </View>
       )}
     </View>
