@@ -131,3 +131,21 @@ export async function register(payload: RegisterPayload): Promise<string> {
   });
   return data.message;
 }
+
+export const hasToken = () => authToken !== null;
+
+export type ZoneRow = {
+  id: number;
+  code: string;
+  name: string;
+  capacity: number;
+  occupied: number;
+  reserved: number;
+  unavailable: number;
+  free: number;
+};
+
+export async function getParkingZones(): Promise<ZoneRow[]> {
+  const data = await request<{ zones: ZoneRow[] }>('/parking/zones');
+  return data.zones;
+}
