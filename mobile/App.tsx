@@ -5,6 +5,9 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import GuestHome from './src/screens/GuestHome';
+import SecurityHome from './src/screens/SecurityHome';
+import AdminHome from './src/screens/AdminHome';
 import ParkingScreen from './src/screens/ParkingScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
@@ -48,10 +51,17 @@ export default function App() {
     ? tab === 'home' || tab === 'profile'
     : authScreen === 'welcome';
 
+  const renderHome = (u: MobileUser) => {
+    if (u.role === 'guest') return <GuestHome user={u} onNavigate={setTab} />;
+    if (u.role === 'security') return <SecurityHome user={u} />;
+    if (u.role === 'parking_admin') return <AdminHome user={u} />;
+    return <HomeScreen user={u} onNavigate={setTab} />;
+  };
+
   const renderTab = (u: MobileUser) => {
     switch (tab) {
       case 'home':
-        return <HomeScreen user={u} onNavigate={setTab} />;
+        return renderHome(u);
       case 'parking':
         return <ParkingScreen />;
       case 'history':
