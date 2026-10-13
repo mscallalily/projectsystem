@@ -1,73 +1,206 @@
-import { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { PARKING_SESSIONS } from '../data/mock';
+import { getParkingHistory, hasToken, errorMessages } from '../api';
+
+type Item = {
+  key: string;
+  date: string;
+  zone: string;
+  method: string;
+  plate: string;
+  entry: string;
+  exit: string;
+  duration: string;
+  active: boolean;
+};
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function fmtDuration(total: number) {
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
+}
+
+const DEMO_ITEMS: Item[] = PARKING_SESSIONS.map((s, i) => ({
+  key: `demo-${i}`,
+  date: s.date,
+  zone: s.zone,
+  method: s.method,
+  plate: s.plate,
+  entry: s.entry,
+  exit: s.exit,
+  duration: s.duration,
+  active: false,
+}));
 
 export default function HistoryScreen() {
+  const [items, setItems] = useState<Item[]>([]);
   const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setError('');
+    try {
+      if (!hasToken()) {
+        // Offline demo account: no API token, use the sample list
+        setItems(DEMO_ITEMS);
+      } else {
+        const rows = await getParkingHistory();
+        setItems(
+          rows.map((r) => ({
+            key: String(r.id),
+            date: fmtDate(r.entry),
+            zone: r.zone,
+            method: r.method,
+            plate: r.plate,
+            entry: fmtTime(r.entry),
+            exit: r.exit ? fmtTime(r.exit) : 'Still parked',
+            duration: r.exit ? fmtDuration(r.minutes) : 'Active',
+            active: r.exit === null,
+          }))
+        );
+      }
+    } catch (e) {
+      setError(errorMessages(e)[0]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const q = query.trim().toLowerCase();
-  const sessions = PARKING_SESSIONS.filter(
+  const visible = items.filter(
     (s) =>
       q === '' ||
       s.date.toLowerCase().includes(q) ||
-      s.zone.toLowerCase().includes(q)
+      s.zone.toLowerCase().includes(q) ||
+      s.plate.toLowerCase().includes(q)
   );
+
+  const plates = Array.from(new Set(items.map((i) => i.plate))).join(', ');
 
   return (
     <ScrollView
       style={styles.screen}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            load();
+          }}
+        />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.title}>Parking History</Text>
-        <Text style={styles.subtitle}>ABC-1234 — Toyota Vios</Text>
+        <Text style={styles.subtitle}>{plates || 'Your parking visits'}</Text>
       </View>
 
       <View style={styles.searchWrap}>
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search by date or zone..."
+          placeholder="Search by date, zone or plate..."
           placeholderTextColor="#94A3B8"
           style={styles.search}
         />
       </View>
 
-      <View style={styles.list}>
-        {sessions.map((s, i) => (
-          <View key={i} style={styles.card}>
-            <View style={styles.cardTop}>
-              <View>
-                <Text style={styles.date}>{s.date}</Text>
-                <Text style={styles.meta}>
-                  {s.zone} · {s.method}
+      {loading && (
+        <View style={{ paddingVertical: 48 }}>
+          <ActivityIndicator size="large" color="#2563EB" />
+        </View>
+      )}
+
+      {error !== '' && (
+        <View style={styles.errorBox}>
+          <Ionicons name="warning-outline" size={16} color="#B91C1C" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Pressable
+              onPress={() => {
+                setLoading(true);
+                load();
+              }}
+            >
+              <Text style={styles.retry}>Retry</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {!loading && error === '' && (
+        <View style={styles.list}>
+          {visible.map((s) => (
+            <View key={s.key} style={styles.card}>
+              <View style={styles.cardTop}>
+                <View>
+                  <Text style={styles.date}>{s.date}</Text>
+                  <Text style={styles.meta}>
+                    {s.zone} · {s.method}
+                  </Text>
+                </View>
+                <Text style={[styles.duration, s.active && { color: '#16A34A' }]}>
+                  {s.duration}
                 </Text>
               </View>
-              <Text style={styles.duration}>{s.duration}</Text>
-            </View>
 
-            <View style={styles.grid}>
-              <View style={styles.cell}>
-                <Text style={styles.cellLabel}>Entry</Text>
-                <Text style={styles.cellValue}>{s.entry}</Text>
-              </View>
-              <View style={styles.cell}>
-                <Text style={styles.cellLabel}>Exit</Text>
-                <Text style={styles.cellValue}>{s.exit}</Text>
-              </View>
-              <View style={styles.cell}>
-                <Text style={styles.cellLabel}>Plate</Text>
-                <Text style={[styles.cellValue, styles.plate]}>{s.plate}</Text>
+              <View style={styles.grid}>
+                <View style={styles.cell}>
+                  <Text style={styles.cellLabel}>Entry</Text>
+                  <Text style={styles.cellValue}>{s.entry}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.cellLabel}>Exit</Text>
+                  <Text style={styles.cellValue}>{s.exit}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.cellLabel}>Plate</Text>
+                  <Text style={[styles.cellValue, styles.plate]}>{s.plate}</Text>
+                </View>
               </View>
             </View>
-          </View>
-        ))}
+          ))}
 
-        {sessions.length === 0 && (
-          <Text style={styles.empty}>No parking records found.</Text>
-        )}
-      </View>
+          {visible.length === 0 && (
+            <Text style={styles.empty}>No parking records found.</Text>
+          )}
+        </View>
+      )}
 
       <View style={{ height: 24 }} />
     </ScrollView>
@@ -90,6 +223,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0F172A',
   },
+  errorBox: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: 20,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    padding: 12,
+  },
+  errorText: { color: '#B91C1C', fontSize: 13 },
+  retry: { color: '#2563EB', fontWeight: '600', fontSize: 13, marginTop: 8 },
   list: { paddingHorizontal: 20, gap: 12 },
   card: {
     backgroundColor: '#FFFFFF',

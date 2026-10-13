@@ -172,3 +172,21 @@ export async function markNotificationRead(id: number): Promise<void> {
 export async function markAllNotificationsRead(): Promise<void> {
   await request('/notifications/read-all', { method: 'POST' });
 }
+
+
+export type HistoryRow = {
+  id: number;
+  plate: string;
+  zone: string;
+  slot: string | null;
+  method: string;
+  status: string;
+  entry: string;
+  exit: string | null;
+  minutes: number;
+};
+
+export async function getParkingHistory(): Promise<HistoryRow[]> {
+  const data = await request<{ history: HistoryRow[] }>('/parking/history');
+  return data.history;
+}

@@ -13,6 +13,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/parking/zones', [ParkingController::class, 'zones']); // mobile: added
+    Route::get('/parking/history', [ParkingController::class, 'history']); // mobile: added
 
     Route::get('/notifications', [NotificationController::class, 'index']); // mobile: added
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']); // mobile: added
