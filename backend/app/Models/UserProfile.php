@@ -11,11 +11,12 @@ class UserProfile extends Model
     protected $primaryKey = 'profile_id';
 
     protected $fillable = [
-        'user_id', 'department_id', 'first_name', 'middle_name', 'last_name', 'suffix',
-        'sex', 'birth_date', 'contact_number', 'address_line', 'city', 'province',
-        'program_or_position', 'year_level', 'photo_path',
-        'emergency_contact_name', 'emergency_contact_number',
-    ];
+    'user_id', 'department_id', 'first_name', 'middle_name', 'last_name', 'suffix',
+    'sex', 'birth_date', 'contact_number', 'address_line', 'city', 'province',
+    'program_or_position', 'year_level', 'photo_path',
+    'school_id_document_path',
+    'emergency_contact_name', 'emergency_contact_number',
+];
 
     public function user(): BelongsTo
     {

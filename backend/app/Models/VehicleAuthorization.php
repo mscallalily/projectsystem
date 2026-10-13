@@ -10,10 +10,21 @@ class VehicleAuthorization extends Model
     protected $table = 'vehicle_authorizations';
     protected $primaryKey = 'authorization_id';
 
-    protected $fillable = [
-        'vehicle_id', 'parking_area_id', 'sticker_number', 'authorization_status',
-        'valid_from', 'valid_until', 'requested_at', 'reviewed_by', 'reviewed_at', 'remarks',
-    ];
+   
+protected $fillable = [
+    'vehicle_id',
+    'parking_area_id',
+    'sticker_number',
+    'authorization_status',
+    'valid_from',
+    'valid_until',
+    'requested_at',
+    'reviewed_by',
+    'reviewed_at',
+    'remarks',
+    'active_flag',
+];
+
 
     public function vehicle(): BelongsTo
     {
