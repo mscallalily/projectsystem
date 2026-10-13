@@ -1,0 +1,11 @@
+import React from 'react';
+import {ScrollView,Text,View,Alert} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';import {colors} from '../theme';import type {AppUser} from '../types';
+import {Button,Card,Heading,Page} from '../components/UI';import {hasRemoteApi} from '../services/api';
+export default function ProfileScreen({user,onLogout}:{user:AppUser;onLogout:()=>void}){
+ return <Page><ScrollView contentContainerStyle={{padding:20}}><Heading title="My profile" subtitle="Your account and application settings."/>
+ <Card><View style={{alignItems:'center',paddingVertical:15}}><View style={{width:76,height:76,borderRadius:38,backgroundColor:colors.blueLight,alignItems:'center',justifyContent:'center',marginBottom:14}}><Ionicons name="person" size={34} color={colors.blue}/></View><Text style={{fontSize:21,fontWeight:'900',color:colors.navy,textTransform:'capitalize'}}>{user.name}</Text><Text style={{color:colors.muted,marginTop:5}}>{user.email}</Text><Text style={{color:colors.blue,fontWeight:'800',marginTop:10,textTransform:'uppercase'}}>{user.role.replace('_',' ')}</Text></View></Card>
+ <Card><Text style={{fontSize:16,fontWeight:'800',color:colors.navy,marginBottom:12}}>Application status</Text><View style={{flexDirection:'row',justifyContent:'space-between',paddingVertical:8}}><Text style={{color:colors.muted}}>Authentication</Text><Text style={{fontWeight:'800',color:hasRemoteApi?colors.green:colors.amber}}>{hasRemoteApi?'Laravel API':'Local preview'}</Text></View><View style={{flexDirection:'row',justifyContent:'space-between',paddingVertical:8}}><Text style={{color:colors.muted}}>Data storage</Text><Text style={{fontWeight:'800',color:colors.text}}>On-device SQLite</Text></View><Text style={{fontSize:12,color:colors.muted,lineHeight:18,marginTop:10}}>Vehicle, parking sample, and history data are stored locally. The provided backend currently exposes authentication and admin user endpoints only; live parking APIs must be added to sync this data centrally.</Text></Card>
+ <Button title="Sign out" onPress={()=>Alert.alert('Sign out','Are you sure you want to sign out?', [{text:'Cancel',style:'cancel'},{text:'Sign out',style:'destructive',onPress:onLogout}])} secondary/>
+ </ScrollView></Page>
+}
