@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DriverLicenseController;
 use App\Http\Controllers\Api\UserManagementController;
+use App\Http\Controllers\Api\AuditLogController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ParkingDashboardController;
 use App\Http\Controllers\Api\VehicleAuthorizationController;
@@ -76,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('admin')->group(function () {
         Route::get('/users', [UserManagementController::class, 'index']);
+	Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
         Route::patch(
             '/users/{id}/approve',
