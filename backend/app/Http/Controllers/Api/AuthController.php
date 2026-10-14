@@ -23,7 +23,6 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        // Normalize the plate number before checking uniqueness.
         $request->merge([
             'plate_number' => strtoupper(
                 trim((string) $request->input('plate_number'))
@@ -39,28 +38,24 @@ class AuthController extends Controller
                 'max:200',
                 'regex:/\S+\s+\S+/',
             ],
-
             'user_code' => [
                 'required',
                 'string',
                 'max:50',
                 'unique:users,user_code',
             ],
-
             'email' => [
                 'required',
                 'email',
                 'max:255',
                 'unique:users,email',
             ],
-
             'password' => [
                 'required',
                 'string',
                 'min:8',
                 'confirmed',
             ],
-
             'user_type' => [
                 'required',
                 Rule::in([
@@ -70,37 +65,30 @@ class AuthController extends Controller
                     'other',
                 ]),
             ],
-
             'department' => [
                 'required',
                 'exists:departments,department_name',
             ],
-
             'contact_number' => [
                 'required',
                 'string',
                 'max:30',
             ],
-
             'has_vehicle' => [
                 'required',
                 'boolean',
             ],
-
             'school_id_file' => [
                 'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',
             ],
-
-            // Vehicle information is required only when has_vehicle is true.
             'vehicle_type' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
                 'exists:vehicle_types,type_name',
             ],
-
             'plate_number' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
@@ -108,28 +96,24 @@ class AuthController extends Controller
                 'max:20',
                 'unique:vehicles,plate_number',
             ],
-
             'make' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
                 'string',
                 'max:100',
             ],
-
             'model' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
                 'string',
                 'max:100',
             ],
-
             'color' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
                 'string',
                 'max:50',
             ],
-
             'license_number' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
@@ -137,7 +121,6 @@ class AuthController extends Controller
                 'max:100',
                 'unique:driver_licenses,license_number',
             ],
-
             'license_type' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
@@ -148,14 +131,12 @@ class AuthController extends Controller
                     'international',
                 ]),
             ],
-
             'license_expiry' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
                 'date',
                 'after_or_equal:today',
             ],
-
             'license_file' => [
                 Rule::requiredIf($hasVehicle),
                 'nullable',
@@ -165,7 +146,6 @@ class AuthController extends Controller
             ],
         ]);
 
-        // Find the department before storing files.
         $department = Department::where(
             'department_name',
             $data['department']
@@ -180,17 +160,18 @@ class AuthController extends Controller
             )->firstOrFail();
         }
 
-        // Split the name into first and last name.
+        // Split the full name into first and last name.
         $nameParts = preg_split(
-    '/\s+/',
-    trim($data['full_name'])
-);
+            '/\s+/',
+            trim($data['full_name'])
+        );
 
-$lastName = array_pop($nameParts);
-$firstName = implode(' ', $nameParts);
+        $lastName = array_pop($nameParts);
+        $firstName = implode(' ', $nameParts);
+
+        $storedFiles = [];
 
         try {
-            // Store documents on a private disk, not in public storage.
             $schoolIdPath = $request->file('school_id_file')
                 ->store('school-ids', 'private');
 
@@ -217,7 +198,6 @@ $firstName = implode(' ', $nameParts);
                 $storedFiles[] = $licensePath;
             }
 
-            // Set when a license is saved, so its automatic check runs after commit.
             $licenseId = null;
             $licenseRunId = (string) Str::uuid();
 
@@ -234,7 +214,7 @@ $firstName = implode(' ', $nameParts);
                 $request,
                 &$licenseId
             ) {
-                // Create the account as pending. Do not auto-approve it.
+                // Create account as pending approval.
                 $user = User::create([
                     'user_code' => $data['user_code'],
                     'email' => $data['email'],
@@ -250,13 +230,11 @@ $firstName = implode(' ', $nameParts);
                     'contact_number' => $data['contact_number'],
                 ]);
 
-                // Requires school_id_document_path to exist in user_profiles.
                 $profile->forceFill([
                     'school_id_document_path' => $schoolIdPath,
                 ])->save();
 
-                // Regular users receive only their matching regular-user role.
-                // "other" receives no role until an administrator assigns one.
+                // Assign a matching role to regular users only.
                 if (in_array(
                     $data['user_type'],
                     ['student', 'faculty', 'employee'],
@@ -275,26 +253,21 @@ $firstName = implode(' ', $nameParts);
                 }
 
                 if ($hasVehicle) {
+                    $vehicle = Vehicle::create([
+                        'owner_user_id' => $user->user_id,
+                        'vehicle_type_id' => $type->vehicle_type_id,
+                        'plate_number' => $data['plate_number'],
+                        'make' => $data['make'] ?? null,
+                        'model' => $data['model'] ?? null,
+                        'color' => $data['color'] ?? null,
+                        'registration_status' => 'registered',
+                    ]);
 
+                    // active_flag is a generated column.
+                    $vehicle->authorizations()->create([
+                        'authorization_status' => 'pending',
+                    ]);
 
-$vehicle = Vehicle::create([
-    'owner_user_id' => $user->user_id,
-    'vehicle_type_id' => $type->vehicle_type_id,
-    'plate_number' => $data['plate_number'],
-    'make' => $data['make'] ?? null,
-    'model' => $data['model'] ?? null,
-    'color' => $data['color'] ?? null,
-    'registration_status' => 'registered',
-]);
-
-// active_flag is a generated column, so it is not set here.
-$vehicle->authorizations()->create([
-    'authorization_status' => 'pending',
-]);
-
-
-
-                    // Create the driver record using the same registrant.
                     $driverId = DB::table('drivers')->insertGetId([
                         'user_id' => $user->user_id,
                         'first_name' => $firstName,
@@ -306,34 +279,32 @@ $vehicle->authorizations()->create([
                         'updated_at' => now(),
                     ], 'driver_id');
 
-                    // Save the driver's license details and private file path.
-<<<<<<< HEAD
+                    // Save the driver's license and get its ID.
+                    $licenseId = DB::table('driver_licenses')->insertGetId([
+                        'driver_id' => $driverId,
+                        'license_number' => $data['license_number'],
+                        'license_type' => $data['license_type'],
+                        'restriction_codes' => null,
+                        'issue_date' => null,
+                        'expiry_date' => $data['license_expiry'],
+                        'issuing_agency' => null,
+                        'license_image_path' => $licensePath,
+                        'original_file_name' => Str::limit(
+                            $request->file('license_file')
+                                ->getClientOriginalName(),
+                            250,
+                            ''
+                        ),
+                        'license_status' => 'valid',
+                        'verification_status' => 'processing',
+                        'verification_source' => 'automatic',
+                        'verification_run_id' => $licenseRunId,
+                        'submitted_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ], 'license_id');
 
-DB::table('driver_licenses')->insert([
-=======
-                    
-$licenseId = DB::table('driver_licenses')->insertGetId([
->>>>>>> origin/feat/parkingmanagement
-    'driver_id' => $driverId,
-    'license_number' => $data['license_number'],
-    'license_type' => $data['license_type'],
-    'restriction_codes' => null,
-    'issue_date' => null,
-    'expiry_date' => $data['license_expiry'],
-    'issuing_agency' => null,
-    'license_image_path' => $licensePath,
-    'original_file_name' => Str::limit($request->file('license_file')->getClientOriginalName(), 250, ''),
-    'license_status' => 'valid',
-    'verification_status' => 'processing',
-    'verification_source' => 'automatic',
-    'verification_run_id' => $licenseRunId,
-    'submitted_at' => now(),
-    'created_at' => now(),
-    'updated_at' => now(),
-], 'license_id');
-
-
-                    // Link the vehicle to the registered driver.
+                    // Link the vehicle to its registered driver.
                     DB::table('vehicle_driver')->insert([
                         'vehicle_id' => $vehicle->vehicle_id,
                         'driver_id' => $driverId,
@@ -349,10 +320,13 @@ $licenseId = DB::table('driver_licenses')->insertGetId([
                 return $user;
             });
 
-            // The registration is saved; a failure in the document check must not undo it.
+            // Run license verification after the database transaction.
             if ($licenseId) {
                 try {
-                    ProcessLicenseVerification::dispatch($licenseId, $licenseRunId);
+                    ProcessLicenseVerification::dispatch(
+                        $licenseId,
+                        $licenseRunId
+                    );
                 } catch (Throwable $exception) {
                     report($exception);
                 }
@@ -364,7 +338,6 @@ $licenseId = DB::table('driver_licenses')->insertGetId([
                 'user' => $this->userPayload($user),
             ], 201);
         } catch (Throwable $exception) {
-            // If the database transaction fails, remove uploaded files too.
             foreach ($storedFiles as $path) {
                 Storage::disk('private')->delete($path);
             }
@@ -507,82 +480,82 @@ $licenseId = DB::table('driver_licenses')->insertGetId([
         ]);
     }
 
-public function forgotPassword(Request $request): JsonResponse
-{
-    $data = $request->validate([
-        'email' => ['required', 'email', 'max:255'],
-    ]);
-
-    $status = Password::sendResetLink([
-        'email' => $data['email'],
-    ]);
-
-    // Avoid revealing whether an email exists in the database.
-    if ($status === Password::RESET_LINK_SENT ||
-        $status === Password::INVALID_USER) {
-        return response()->json([
-            'message' =>
-                'If an account exists for that email, a password reset link will be sent.',
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
         ]);
-    }
 
-    if ($status === Password::RESET_THROTTLED) {
-        return response()->json([
-            'message' =>
-                'Please wait before requesting another reset link.',
-        ], 429);
-    }
+        $status = Password::sendResetLink([
+            'email' => $data['email'],
+        ]);
 
-    report(new \RuntimeException(
-        'Password reset link could not be sent: ' . $status
-    ));
-
-    return response()->json([
-        'message' =>
-            'Unable to process your request right now. Please try again later.',
-    ], 500);
-}
-
-public function resetPassword(Request $request): JsonResponse
-{
-    $data = $request->validate([
-        'token' => ['required', 'string'],
-        'email' => ['required', 'email', 'max:255'],
-        'password' => ['required', 'string', 'min:8', 'confirmed'],
-    ]);
-
-    $status = Password::reset(
-        $data,
-        function (User $user, string $password): void {
-            // The User model's "hashed" cast hashes the new password.
-            $user->forceFill([
-                'password' => $password,
-                'remember_token' => Str::random(60),
-            ])->save();
-
-            // Revoke existing API sessions after a password change.
-            $user->tokens()->delete();
+        // Avoid revealing whether an email exists.
+        if (
+            $status === Password::RESET_LINK_SENT ||
+            $status === Password::INVALID_USER
+        ) {
+            return response()->json([
+                'message' =>
+                    'If an account exists for that email, a password reset link will be sent.',
+            ]);
         }
-    );
 
-    if ($status === Password::PASSWORD_RESET) {
+        if ($status === Password::RESET_THROTTLED) {
+            return response()->json([
+                'message' =>
+                    'Please wait before requesting another reset link.',
+            ], 429);
+        }
+
+        report(new \RuntimeException(
+            'Password reset link could not be sent: ' . $status
+        ));
+
         return response()->json([
-            'message' => 'Your password has been reset successfully.',
-        ]);
+            'message' =>
+                'Unable to process your request right now. Please try again later.',
+        ], 500);
     }
 
-    return response()->json([
-        'message' => match ($status) {
-            Password::INVALID_USER =>
-                'Unable to reset the password for this account.',
-            Password::INVALID_TOKEN =>
-                'This reset link is invalid or has expired. Please request a new one.',
-            Password::RESET_THROTTLED =>
-                'Please wait before trying again.',
-            default =>
-                'Unable to reset your password. Please request a new link.',
-        },
-    ], 422);
-}
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
 
+        $status = Password::reset(
+            $data,
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => $password,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                // Revoke existing API sessions after a password change.
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Your password has been reset successfully.',
+            ]);
+        }
+
+        return response()->json([
+            'message' => match ($status) {
+                Password::INVALID_USER =>
+                    'Unable to reset the password for this account.',
+                Password::INVALID_TOKEN =>
+                    'This reset link is invalid or has expired. Please request a new one.',
+                Password::RESET_THROTTLED =>
+                    'Please wait before trying again.',
+                default =>
+                    'Unable to reset your password. Please request a new link.',
+            },
+        ], 422);
+    }
 }
