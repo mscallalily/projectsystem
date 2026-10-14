@@ -1,0 +1,173 @@
+D	README.md
+D	backend/.editorconfig
+D	backend/.env.example
+D	backend/.gitattributes
+D	backend/.gitignore
+D	backend/README.md
+D	backend/app/Console/Commands/ApproveUser.php
+D	backend/app/Console/Commands/CreateAdmin.php
+D	backend/app/Http/Controllers/Api/AuthController.php
+D	backend/app/Http/Controllers/Controller.php
+D	backend/app/Models/Department.php
+D	backend/app/Models/Role.php
+D	backend/app/Models/User.php
+D	backend/app/Models/UserProfile.php
+D	backend/app/Models/Vehicle.php
+D	backend/app/Models/VehicleAuthorization.php
+D	backend/app/Models/VehicleType.php
+D	backend/app/Providers/AppServiceProvider.php
+D	backend/artisan
+D	backend/bootstrap/app.php
+D	backend/bootstrap/cache/.gitignore
+D	backend/bootstrap/providers.php
+D	backend/composer.json
+D	backend/composer.lock
+D	backend/config/app.php
+D	backend/config/auth.php
+D	backend/config/cache.php
+D	backend/config/database.php
+D	backend/config/filesystems.php
+D	backend/config/logging.php
+D	backend/config/mail.php
+D	backend/config/queue.php
+D	backend/config/sanctum.php
+D	backend/config/services.php
+D	backend/config/session.php
+D	backend/database/.gitignore
+D	backend/database/factories/UserFactory.php
+D	backend/database/migrations/2026_10_07_154030_create_departments_table.php
+D	backend/database/migrations/2026_10_07_154030_create_roles_table.php
+D	backend/database/migrations/2026_10_07_154031_create_permissions_table.php
+D	backend/database/migrations/2026_10_07_154042_create_vehicle_types_table.php
+D	backend/database/migrations/2026_10_07_154722_create_users_table.php
+D	backend/database/migrations/2026_10_07_154725_create_user_profiles_table.php
+D	backend/database/migrations/2026_10_07_154727_create_user_roles_table.php
+D	backend/database/migrations/2026_10_07_154730_create_role_permissions_table.php
+D	backend/database/migrations/2026_10_07_154815_create_login_attempts_table.php
+D	backend/database/migrations/2026_10_08_021551_create_parking_areas_table.php
+D	backend/database/migrations/2026_10_08_021553_create_visitors_table.php
+D	backend/database/migrations/2026_10_08_021556_create_drivers_table.php
+D	backend/database/migrations/2026_10_08_021558_create_driver_licenses_table.php
+D	backend/database/migrations/2026_10_08_024200_create_vehicles_table.php
+D	backend/database/migrations/2026_10_08_024203_create_vehicle_authorizations_table.php
+D	backend/database/migrations/2026_10_08_024205_create_vehicle_driver_table.php
+D	backend/database/migrations/2026_10_08_024210_add_owner_check_to_vehicles_table.php
+D	backend/database/migrations/2026_10_08_024526_create_access_gates_table.php
+D	backend/database/migrations/2026_10_08_024529_create_rfid_tags_table.php
+D	backend/database/migrations/2026_10_08_024531_create_rfid_readers_table.php
+D	backend/database/migrations/2026_10_08_024542_create_rfid_assignments_table.php
+D	backend/database/migrations/2026_10_08_024801_create_parking_zones_table.php
+D	backend/database/migrations/2026_10_08_024804_create_parking_slots_table.php
+D	backend/database/migrations/2026_10_08_024806_create_visitor_requests_table.php
+D	backend/database/migrations/2026_10_08_024809_create_qr_passes_table.php
+D	backend/database/migrations/2026_10_08_024940_create_access_events_table.php
+D	backend/database/migrations/2026_10_08_024942_create_parking_transactions_table.php
+D	backend/database/migrations/2026_10_08_025057_create_mobile_devices_table.php
+D	backend/database/migrations/2026_10_08_025059_create_notifications_table.php
+D	backend/database/migrations/2026_10_08_025102_create_violation_types_table.php
+D	backend/database/migrations/2026_10_08_025104_create_parking_violations_table.php
+D	backend/database/migrations/2026_10_08_025107_create_violation_evidences_table.php
+D	backend/database/migrations/2026_10_08_025109_create_audit_logs_table.php
+D	backend/database/migrations/2026_10_08_025113_create_system_settings_table.php
+D	backend/database/migrations/2026_10_08_030212_add_safeguards_to_tables.php
+D	backend/database/migrations/2026_10_08_031024_create_personal_access_tokens_table.php
+D	backend/database/seeders/DatabaseSeeder.php
+D	backend/database/seeders/DepartmentSeeder.php
+D	backend/database/seeders/RoleSeeder.php
+D	backend/database/seeders/VehicleTypeSeeder.php
+D	backend/package.json
+D	backend/phpunit.xml
+D	backend/public/.htaccess
+D	backend/public/favicon.ico
+D	backend/public/index.php
+D	backend/public/robots.txt
+D	backend/resources/css/app.css
+D	backend/resources/js/app.js
+D	backend/resources/js/bootstrap.js
+D	backend/resources/views/welcome.blade.php
+D	backend/routes/api.php
+D	backend/routes/console.php
+D	backend/routes/web.php
+D	backend/storage/app/.gitignore
+D	backend/storage/app/private/.gitignore
+D	backend/storage/app/public/.gitignore
+D	backend/storage/framework/.gitignore
+D	backend/storage/framework/cache/.gitignore
+D	backend/storage/framework/cache/data/.gitignore
+D	backend/storage/framework/sessions/.gitignore
+D	backend/storage/framework/testing/.gitignore
+D	backend/storage/framework/views/.gitignore
+D	backend/tests/Feature/ExampleTest.php
+D	backend/tests/TestCase.php
+D	backend/tests/Unit/ExampleTest.php
+D	backend/vite.config.js
+R100	.figma/make/analyze-routes	frontend/.figma/make/analyze-routes
+R100	.figma/make/deploy	frontend/.figma/make/deploy
+R100	.figma/make/deploy-preview	frontend/.figma/make/deploy-preview
+R100	.figma/make/dev	frontend/.figma/make/dev
+R100	.figma/make/dev.json	frontend/.figma/make/dev.json
+R100	.figma/make/format	frontend/.figma/make/format
+R100	.figma/make/import-assets.mjs	frontend/.figma/make/import-assets.mjs
+R100	.figma/make/install	frontend/.figma/make/install
+R100	.figma/make/langserver	frontend/.figma/make/langserver
+R100	.figma/make/site.json	frontend/.figma/make/site.json
+R100	.gitattributes	frontend/.gitattributes
+R087	.gitignore	frontend/.gitignore
+R100	.mise.toml	frontend/.mise.toml
+R100	AGENTS.md	frontend/AGENTS.md
+R100	CLAUDE.md	frontend/CLAUDE.md
+A	frontend/UI_FINAL_AUDIT.md
+A	frontend/UI_UPDATE_NOTES.md
+R100	index.html	frontend/index.html
+R065	package-lock.json	frontend/package-lock.json
+R100	package.json	frontend/package.json
+R100	pnpm-lock.yaml	frontend/pnpm-lock.yaml
+A	frontend/public/branding/README.txt
+A	frontend/public/branding/pass-logo.png
+R053	src/App.tsx	frontend/src/App.tsx
+A	frontend/src/components/Brand.tsx
+A	frontend/src/components/DriverLicenseVerification.tsx
+A	frontend/src/components/FileUpload.tsx
+R063	src/components/Layout.tsx	frontend/src/components/Layout.tsx
+A	frontend/src/components/LicenseReviewQueue.tsx
+A	frontend/src/components/RegistrationForm.tsx
+R093	src/components/ui.tsx	frontend/src/components/ui.tsx
+A	frontend/src/config/branding.ts
+A	frontend/src/context/AuthContext.tsx
+A	frontend/src/context/LicenseContext.tsx
+R093	src/data/mock.ts	frontend/src/data/mock.ts
+R084	src/index.css	frontend/src/index.css
+R100	src/main.tsx	frontend/src/main.tsx
+R095	src/pages/ForgotPasswordPage.tsx	frontend/src/pages/ForgotPasswordPage.tsx
+A	frontend/src/pages/GuestDashboardPage.tsx
+A	frontend/src/pages/GuestLandingPage.tsx
+R074	src/pages/GuestRegisterPage.tsx	frontend/src/pages/GuestRegisterPage.tsx
+R068	src/pages/LandingPage.tsx	frontend/src/pages/LandingPage.tsx
+R073	src/pages/LoginPage.tsx	frontend/src/pages/LoginPage.tsx
+R056	src/pages/MobileApp.tsx	frontend/src/pages/MobileApp.tsx
+A	frontend/src/pages/RegisterPage.tsx
+R098	src/pages/app/AuditLogs.tsx	frontend/src/pages/app/AuditLogs.tsx
+R067	src/pages/app/Dashboard.tsx	frontend/src/pages/app/Dashboard.tsx
+R100	src/pages/app/Notifications.tsx	frontend/src/pages/app/Notifications.tsx
+R081	src/pages/app/ParkingHistory.tsx	frontend/src/pages/app/ParkingHistory.tsx
+A	frontend/src/pages/app/ParkingOperations.tsx
+A	frontend/src/pages/app/Profile.tsx
+A	frontend/src/pages/app/RFIDManagement.tsx
+R100	src/pages/app/Reports.tsx	frontend/src/pages/app/Reports.tsx
+R080	src/pages/app/SystemSettings.tsx	frontend/src/pages/app/SystemSettings.tsx
+R080	src/pages/app/UserManagement.tsx	frontend/src/pages/app/UserManagement.tsx
+A	frontend/src/pages/app/VehicleManagement.tsx
+R099	src/pages/app/Violations.tsx	frontend/src/pages/app/Violations.tsx
+R088	src/pages/app/VisitorQR.tsx	frontend/src/pages/app/VisitorQR.tsx
+R100	src/vite-env.d.ts	frontend/src/vite-env.d.ts
+R100	tsconfig.json	frontend/tsconfig.json
+R092	vite.config.ts	frontend/vite.config.ts
+D	src/context/AuthContext.tsx
+D	src/lib/api.ts
+D	src/pages/GuestDashboardPage.tsx
+D	src/pages/GuestLandingPage.tsx
+D	src/pages/RegisterPage.tsx
+D	src/pages/app/ParkingOperations.tsx
+D	src/pages/app/Profile.tsx
+D	src/pages/app/RFIDManagement.tsx
+D	src/pages/app/VehicleManagement.tsx
