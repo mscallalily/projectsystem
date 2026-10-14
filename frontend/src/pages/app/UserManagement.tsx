@@ -66,19 +66,21 @@ function getToken(): string | null {
   );
 }
 
+
 function displayRole(role?: string | null, userType?: string | null) {
   const value = (role || userType || 'user').toLowerCase();
 
-  if (['parking_admin', 'parking_staff', 'security', 'parking'].includes(value)) {
-    return 'parking_staff';
+  if (['admin', 'administrator', 'parking_admin'].includes(value)) {
+    return 'admin';
   }
 
-  if (value === 'administrator') {
-    return 'admin';
+  if (['parking_staff', 'security', 'parking'].includes(value)) {
+    return 'parking_staff';
   }
 
   return value;
 }
+
 
 function mapUser(user: ApiUser): UserRow {
   return {
@@ -153,6 +155,19 @@ export default function UserManagement() {
   const [selected, setSelected] = useState<UserRow | null>(null);
 
   const [showAdd, setShowAdd] = useState(false);
+
+const [addForm, setAddForm] = useState({
+  full_name: '',
+  user_code: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  department_id: '',
+  contact_number: '',
+});
+
+const [savingUser, setSavingUser] = useState(false);
+
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -276,6 +291,57 @@ export default function UserManagement() {
       setActionId(null);
     }
   }
+
+async function handleAddUser(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setError('');
+  setSavingUser(true);
+
+  try {
+    await apiRequest<{ message: string; user: ApiUser }>(
+      '/api/admin/users',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...addForm,
+          department_id: Number(addForm.department_id),
+        }),
+      }
+    );
+
+    setShowAdd(false);
+    setAddForm({
+      full_name: '',
+      user_code: '',
+      email: '',
+      password: '',
+      password_confirmation: '',
+      department_id: '',
+      contact_number: '',
+    });
+
+    showToast('Parking Staff account created successfully!');
+    setTab('All Users');
+    setFilterStatus('active');
+    setFilterRole('parking_staff');
+    setSearch('');
+    setRefreshKey((value) => value + 1);
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Unable to create the account.';
+
+    setError(message);
+    showToast(message);
+  } finally {
+    setSavingUser(false);
+  }
+}
+
 
   return (
     <div className="animate-fadein">
@@ -639,33 +705,147 @@ export default function UserManagement() {
         )}
       </Modal>
 
-      <Modal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        title="Add New User"
-        size="md"
+
+<Modal
+  open={showAdd}
+  onClose={() => {
+    if (!savingUser) setShowAdd(false);
+  }}
+  title="Add Parking Staff"
+  size="md"
+>
+  <form onSubmit={handleAddUser} className="space-y-4">
+    <p className="text-sm text-slate-500">
+      Create an active Parking Staff account. The staff member can
+      log in using the email and password provided.
+    </p>
+
+    <Input
+      label="Full Name"
+      placeholder="Juan dela Cruz"
+      value={addForm.full_name}
+      onChange={(event) =>
+  setAddForm({
+    ...addForm,
+    full_name: event.target.value,
+  })
+}
+      required
+    />
+
+    <Input
+      label="Institutional ID"
+      placeholder="2024-00001"
+      value={addForm.user_code}
+      onChange={(event) =>
+  setAddForm({
+    ...addForm,
+    user_code: event.target.value,
+  })
+}
+      required
+    />
+
+    <Input
+      label="Email"
+      type="email"
+      placeholder="juan@university.edu"
+      value={addForm.email}
+      onChange={(event) =>
+  setAddForm({
+    ...addForm,
+    email: event.target.value,
+  })
+}
+      required
+    />
+
+    <Input
+      label="Password"
+      type="password"
+      placeholder="At least 8 characters"
+      value={addForm.password}
+      onChange={(event) =>
+  setAddForm({
+    ...addForm,
+    password: event.target.value,
+  })
+}
+      required
+    />
+
+    <Input
+      label="Confirm Password"
+      type="password"
+      placeholder="Enter the password again"
+      value={addForm.password_confirmation}
+      onChange={(event) =>
+  setAddForm({
+    ...addForm,
+    password_confirmation: event.target.value,
+  })
+}
+      required
+    />
+
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">
+        Department
+      </label>
+
+      <Select
+        value={addForm.department_id}
+        onChange={(event) =>
+          setAddForm({
+            ...addForm,
+            department_id: event.target.value,
+          })
+        }
+        required
       >
-        <div className="space-y-4">
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            Admin-side user creation is not connected to the backend yet.
-            This form will not create a database record.
-          </p>
+        <option value="">Select department</option>
+        <option value="1">College of Engineering</option>
+        <option value="2">College of Science</option>
+        <option value="3">College of Business</option>
+        <option value="4">College of Arts</option>
+        <option value="5">College of Nursing</option>
+        <option value="6">Registrar Office</option>
+        <option value="7">HR Department</option>
+        <option value="8">IT Department</option>
+        <option value="9">Security Office</option>
+      </Select>
+    </div>
 
-          <Input label="Full Name" placeholder="Juan dela Cruz" />
-          <Input label="Institutional ID" placeholder="2024-00001" />
-          <Input
-            label="Email"
-            type="email"
-            placeholder="juan@university.edu"
-          />
+    <Input
+      label="Contact Number (Optional)"
+      placeholder="09XXXXXXXXX"
+      value={addForm.contact_number}
+      onChange={(event) =>
+  setAddForm({
+    ...addForm,
+    contact_number: event.target.value,
+  })
+}
+    />
 
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={() => setShowAdd(false)}>
-              Close
-            </Button>
-          </div>
-        </div>
-      </Modal>
+    <div className="flex justify-end gap-3 pt-3">
+      <Button
+        type="button"
+        variant="outline"
+        disabled={savingUser}
+        onClick={() => setShowAdd(false)}
+      >
+        Cancel
+      </Button>
+
+      <Button type="submit" disabled={savingUser}>
+        <UserPlus size={16} />
+        {savingUser ? 'Creating...' : 'Create Account'}
+      </Button>
+    </div>
+  </form>
+</Modal>
+
     </div>
   );
 }

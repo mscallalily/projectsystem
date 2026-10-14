@@ -162,9 +162,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setUser(restoredUser);
-      } catch {
-        clearStoredToken();
+      } catch (error) {
+        console.error('Session restore failed:', error);
+
+        if (!cancelled) {
+          clearStoredToken();
+          setUser(null);
+        }
       }
+
     }
 
     void restoreSession();
